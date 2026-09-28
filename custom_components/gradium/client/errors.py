@@ -6,6 +6,11 @@ Every message is meant to be read by a person and never contains the API key.
 from __future__ import annotations
 
 
+def first_line(text: str) -> str:
+    """Return the first line of an error text, dropping any footer that follows it."""
+    return text.partition("\n")[0].strip()
+
+
 class GradiumError(Exception):
     """Base error for anything the Gradium client could not carry out."""
 

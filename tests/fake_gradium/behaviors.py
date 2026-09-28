@@ -16,6 +16,13 @@ from aiohttp import WSCloseCode, web
 
 ERROR_MESSAGE = "Internal failure"
 POLICY_MESSAGE = "Missing subscription"
+# Made up: the real server appends a multi-line footer to its error messages.
+SUPPORT_FOOTER = "If the problem persists, contact support."
+
+
+def with_footer(text: str) -> str:
+    """An error message text as the server sends it: the reason, then a footer line."""
+    return f"{text}\n{SUPPORT_FOOTER}"
 
 
 class AuthFailure(Enum):
@@ -108,6 +115,6 @@ async def send_error(ws: web.WebSocketResponse, record: SessionRecord) -> None:
 async def send_policy_refusal(ws: web.WebSocketResponse, record: SessionRecord) -> None:
     """Refuse a request on policy with a valid key: an error message code 1008, then close 1008."""
     code = WSCloseCode.POLICY_VIOLATION
-    await ws.send_json({"type": "error", "message": POLICY_MESSAGE, "code": int(code)})
+    await ws.send_json({"type": "error", "message": with_footer(POLICY_MESSAGE), "code": int(code)})
     record.error_sent.set()
     await ws.close(code=code, message=POLICY_MESSAGE.encode())

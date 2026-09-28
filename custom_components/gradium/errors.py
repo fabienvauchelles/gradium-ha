@@ -15,6 +15,7 @@ from .client import (
     GradiumError,
     GradiumServerError,
     GradiumTimeoutError,
+    first_line,
 )
 from .const import DOMAIN
 from .data import GradiumConfigEntry
@@ -47,11 +48,15 @@ def log_gradium_error(err: GradiumError, action: str) -> None:
 def raise_for_gradium_error(
     hass: HomeAssistant, entry: GradiumConfigEntry, err: GradiumError
 ) -> NoReturn:
-    """Raise the translated HomeAssistantError for `err`, starting reauth on a refused key."""
+    """Raise the translated HomeAssistantError for `err`, starting reauth on a refused key.
+
+    The translation names the failure; the placeholder carries only the first
+    line of the error's detail, never a support footer the server appended.
+    """
     if isinstance(err, GradiumAuthError):
         entry.async_start_reauth(hass)
     raise HomeAssistantError(
         translation_domain=DOMAIN,
         translation_key=translation_key_for(err),
-        translation_placeholders={"error": str(err)},
+        translation_placeholders={"error": first_line(str(err))},
     ) from err

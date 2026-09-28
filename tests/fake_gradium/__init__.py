@@ -1,6 +1,7 @@
 """A fake Gradium API the integration talks to over real loopback sockets."""
 
 from .behaviors import (
+    SUPPORT_FOOTER,
     AuthFailure,
     RestFailure,
     SessionRecord,
@@ -12,6 +13,7 @@ from .behaviors import (
 from .server import FakeGradiumServer, RestRequest
 
 __all__ = [
+    "SUPPORT_FOOTER",
     "AuthFailure",
     "FakeGradiumServer",
     "RestFailure",

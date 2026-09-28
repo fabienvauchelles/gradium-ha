@@ -6,6 +6,10 @@ error first; only the free text differs ("Invalid or expired API key" for a
 wrong key and "No authentication provided." for a missing one, see
 docs/protocol.md). Free text is no contract, so the credit balance settles it:
 the REST read answers 401 to a bad key.
+
+The errors returned here carry only the first line of the server's reason:
+the failure itself is named once, by the error class and the message Home
+Assistant shows for it, and the server's support footer is dropped.
 """
 
 from __future__ import annotations
@@ -18,6 +22,7 @@ from .errors import (
     GradiumError,
     GradiumPolicyError,
     GradiumServerError,
+    first_line,
 )
 from .models import Credits
 
@@ -32,16 +37,15 @@ async def resolve_refusal(
     including a credit read that failed for another reason, stays a server
     error carrying the server's message, so no reauth loop can start on a guess.
     """
+    detail = first_line(refusal.detail)
     try:
         credits = await read_credits()
-    except GradiumAuthError as err:
-        return GradiumAuthError(f"Gradium refused the API key: {refusal.detail} ({err})")
+    except GradiumAuthError:
+        return GradiumAuthError(detail)
     except GradiumError as err:
         return GradiumServerError(
-            f"{refusal} (the credit check that followed failed too: {err})", refusal.code
+            f"{detail} (the credit check that followed failed too: {err})", refusal.code
         )
     if credits.remaining <= 0:
-        return GradiumCreditsExhaustedError(
-            f"Gradium has no credit left on this account: {refusal.detail}"
-        )
-    return GradiumServerError(str(refusal), refusal.code)
+        return GradiumCreditsExhaustedError(detail)
+    return GradiumServerError(detail, refusal.code)

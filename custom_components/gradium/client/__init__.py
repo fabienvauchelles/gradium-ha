@@ -14,6 +14,7 @@ from .errors import (
     GradiumError,
     GradiumServerError,
     GradiumTimeoutError,
+    first_line,
 )
 from .models import Credits, Endpoint, Region, SttSettings, Timeouts, TtsSettings, Voice
 from .pcm import PcmFramer, wav_header
@@ -34,5 +35,6 @@ __all__ = [
     "Timeouts",
     "TtsSettings",
     "Voice",
+    "first_line",
     "wav_header",
 ]

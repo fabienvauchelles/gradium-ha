@@ -34,6 +34,7 @@ from .behaviors import (
     SttRecord,
     TtsBehavior,
     TtsRecord,
+    with_footer,
 )
 from .stt_handler import SttPlayer
 from .tts_handler import TtsPlayer
@@ -162,7 +163,7 @@ async def _play(
     if not record.authorized:
         code = WSCloseCode.POLICY_VIOLATION
         if auth_failure is AuthFailure.ERROR_MESSAGE:
-            error = {"type": "error", "client_req_id": None, "message": AUTH_FAILURE}
+            error = {"type": "error", "client_req_id": None, "message": with_footer(AUTH_FAILURE)}
             await ws.send_json({**error, "code": int(code)})
         await ws.close(code=code, message=AUTH_FAILURE.encode())
         return

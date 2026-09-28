@@ -7,6 +7,8 @@ settles it with a credit read: refused, the key is bad and a reauth starts; an
 empty balance is a typed credits error; anything else is a server error. The
 last two never start a reauth, which would accept the same key and loop. The
 fake's refusal text is the same in every case on purpose: it must not matter.
+The message shown names the failure once and carries only the first line of
+the server's reason, never the support footer that follows it.
 """
 
 from __future__ import annotations
@@ -26,6 +28,7 @@ from .conftest import (
     transcribe,
 )
 from .fake_gradium import (
+    SUPPORT_FOOTER,
     AuthFailure,
     FakeGradiumServer,
     RestFailure,
@@ -38,6 +41,11 @@ from .fixtures import NEW_API_KEY, SENTENCE, speech_pcm
 SPEECH_MS = 1250
 CREDITS_PATH = "/api/usages/credits"
 POLICY_TEXT = "Missing subscription"
+KEY_REFUSED = "Gradium refused the API key: "
+CREDIT_CHECK_FAILED = (
+    " (the credit check that followed failed too:"
+    " Gradium answered GET /usages/credits with HTTP 500)"
+)
 pytestmark = pytest.mark.usefixtures("setup_integration")
 
 
@@ -72,15 +80,23 @@ async def test_bad_key_on_stt_returns_error_and_starts_reauth(
     assert not check.authorized
     assert len(reauth_flows(hass)) == 1
     assert "GradiumAuthError" in caplog.text
+    assert SUPPORT_FOOTER not in caplog.text
     assert_key_not_leaked(caplog)
 
 
-@pytest.mark.parametrize("auth_failure", [AuthFailure.ERROR_MESSAGE, AuthFailure.BARE_CLOSE])
+@pytest.mark.parametrize(
+    ("auth_failure", "message"),
+    [
+        (AuthFailure.ERROR_MESSAGE, f"{KEY_REFUSED}Invalid or expired API key"),
+        (AuthFailure.BARE_CLOSE, f"{KEY_REFUSED}close code 1008: Invalid or expired API key"),
+    ],
+)
 async def test_bad_key_on_tts_raises_invalid_auth_and_starts_reauth(
     hass: HomeAssistant,
     fake_gradium: FakeGradiumServer,
     caplog: pytest.LogCaptureFixture,
     auth_failure: AuthFailure,
+    message: str,
 ) -> None:
     """1008 on the TTS socket, with or without JSON, and a refused credit read: invalid_auth."""
     _revoke_key(fake_gradium, auth_failure)
@@ -90,6 +106,7 @@ async def test_bad_key_on_tts_raises_invalid_auth_and_starts_reauth(
     await hass.async_block_till_done()
 
     assert info.value.translation_key == "invalid_auth"
+    assert str(info.value) == message
     [record] = fake_gradium.tts_sessions
     assert not record.authorized
     [check] = _credit_reads(fake_gradium)
@@ -115,6 +132,7 @@ async def test_no_credit_left_on_stt_returns_error_without_reauth(
     assert check.authorized
     assert reauth_flows(hass) == []
     assert "GradiumCreditsExhaustedError" in caplog.text
+    assert SUPPORT_FOOTER not in caplog.text
     assert_key_not_leaked(caplog)
 
 
@@ -130,7 +148,7 @@ async def test_no_credit_left_on_tts_raises_credits_exhausted_without_reauth(
     await hass.async_block_till_done()
 
     assert info.value.translation_key == "credits_exhausted"
-    assert POLICY_TEXT in str(info.value)
+    assert str(info.value) == f"Gradium has no credit left: {POLICY_TEXT}"
     assert len(_credit_reads(fake_gradium)) == 1
     assert reauth_flows(hass) == []
     assert_key_not_leaked(caplog, str(info.value))
@@ -153,15 +171,23 @@ async def test_policy_refusal_on_stt_returns_error_without_reauth(
     assert "refused the API key" not in caplog.text
     assert "GradiumServerError" in caplog.text
     assert POLICY_TEXT in caplog.text
+    assert SUPPORT_FOOTER not in caplog.text
     assert_key_not_leaked(caplog)
 
 
-@pytest.mark.parametrize("rest_failure", [RestFailure.NONE, RestFailure.SERVER_ERROR])
+@pytest.mark.parametrize(
+    ("rest_failure", "detail"),
+    [
+        (RestFailure.NONE, POLICY_TEXT),
+        (RestFailure.SERVER_ERROR, f"{POLICY_TEXT}{CREDIT_CHECK_FAILED}"),
+    ],
+)
 async def test_policy_refusal_on_tts_raises_server_error_without_reauth(
     hass: HomeAssistant,
     fake_gradium: FakeGradiumServer,
     caplog: pytest.LogCaptureFixture,
     rest_failure: RestFailure,
+    detail: str,
 ) -> None:
     """Refusal with code 1008 and credits left, or a credit read that fails: server_error."""
     fake_gradium.tts = TtsBehavior.POLICY_REFUSED
@@ -177,5 +203,5 @@ async def test_policy_refusal_on_tts_raises_server_error_without_reauth(
     assert record.setup["voice_id"] == "unknown-voice"
     assert len(_credit_reads(fake_gradium)) == 1
     assert reauth_flows(hass) == []
-    assert POLICY_TEXT in str(info.value)
+    assert str(info.value) == f"Gradium reported an error: {detail}"
     assert_key_not_leaked(caplog, str(info.value))
