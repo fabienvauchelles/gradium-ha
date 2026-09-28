@@ -1,0 +1,81 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Gradium",
+        "description": "Connecter Home Assistant à la transcription et à la synthèse vocale de Gradium.",
+        "data": {
+          "api_key": "Clé d'API",
+          "region": "Région"
+        },
+        "data_description": {
+          "api_key": "La clé d'API créée dans le tableau de bord Gradium.",
+          "region": "Le point d'accès Gradium à utiliser. Europe garde les requêtes sur eu.api.gradium.ai."
+        }
+      },
+      "reauth_confirm": {
+        "title": "Saisir une nouvelle clé d'API",
+        "description": "Gradium a refusé la clé d'API enregistrée. Saisissez une clé valide.",
+        "data": {
+          "api_key": "Clé d'API"
+        },
+        "data_description": {
+          "api_key": "La clé d'API créée dans le tableau de bord Gradium."
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Gradium a refusé la clé d'API.",
+      "cannot_connect": "Impossible de joindre Gradium. Vérifiez le réseau puis réessayez."
+    },
+    "abort": {
+      "reauth_successful": "La clé d'API a été mise à jour.",
+      "single_instance_allowed": "Gradium est déjà configuré. Une seule entrée est autorisée."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options de Gradium",
+        "data": {
+          "voice": "Voix par défaut",
+          "tts_model": "Modèle de synthèse vocale",
+          "language": "Langue"
+        },
+        "data_description": {
+          "voice": "Les voix de la langue enregistrée et vos voix personnalisées. Enregistrez d'abord une nouvelle langue pour voir ses voix.",
+          "tts_model": "Le modèle Gradium utilisé pour la synthèse vocale.",
+          "language": "La langue de repli de la transcription et la langue par défaut de la synthèse vocale."
+        }
+      }
+    },
+    "abort": {
+      "not_loaded": "L'intégration n'est pas chargée. Corrigez sa configuration avant de modifier les options."
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "eu": "Europe",
+        "global": "Monde"
+      }
+    }
+  },
+  "exceptions": {
+    "invalid_auth": {
+      "message": "Gradium a refusé la clé d'API : {error}"
+    },
+    "credits_exhausted": {
+      "message": "Gradium n'a plus de crédit : {error}"
+    },
+    "cannot_connect": {
+      "message": "Impossible de joindre Gradium : {error}"
+    },
+    "timeout": {
+      "message": "Gradium n'a pas répondu à temps : {error}"
+    },
+    "server_error": {
+      "message": "Gradium a signalé une erreur : {error}"
+    }
+  }
+}

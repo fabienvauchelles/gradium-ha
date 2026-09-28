@@ -1,0 +1,81 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Gradium",
+        "description": "Connect Home Assistant to Gradium speech-to-text and text-to-speech.",
+        "data": {
+          "api_key": "API key",
+          "region": "Region"
+        },
+        "data_description": {
+          "api_key": "The API key created in the Gradium dashboard.",
+          "region": "The Gradium endpoint to use. Europe keeps requests on eu.api.gradium.ai."
+        }
+      },
+      "reauth_confirm": {
+        "title": "Enter a new API key",
+        "description": "Gradium refused the stored API key. Enter a valid one.",
+        "data": {
+          "api_key": "API key"
+        },
+        "data_description": {
+          "api_key": "The API key created in the Gradium dashboard."
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Gradium refused the API key.",
+      "cannot_connect": "Could not reach Gradium. Check the network and try again."
+    },
+    "abort": {
+      "reauth_successful": "The API key was updated.",
+      "single_instance_allowed": "Gradium is already configured. Only one entry is allowed."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Gradium options",
+        "data": {
+          "voice": "Default voice",
+          "tts_model": "Text-to-speech model",
+          "language": "Language"
+        },
+        "data_description": {
+          "voice": "Voices of the saved language plus your custom voices. Save a new language first to see its voices.",
+          "tts_model": "The Gradium model used to synthesize speech.",
+          "language": "The speech-to-text fallback language and the text-to-speech default language."
+        }
+      }
+    },
+    "abort": {
+      "not_loaded": "The integration is not loaded. Fix its setup before changing options."
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "eu": "Europe",
+        "global": "Global"
+      }
+    }
+  },
+  "exceptions": {
+    "invalid_auth": {
+      "message": "Gradium refused the API key: {error}"
+    },
+    "credits_exhausted": {
+      "message": "Gradium has no credit left: {error}"
+    },
+    "cannot_connect": {
+      "message": "Could not reach Gradium: {error}"
+    },
+    "timeout": {
+      "message": "Gradium did not answer in time: {error}"
+    },
+    "server_error": {
+      "message": "Gradium reported an error: {error}"
+    }
+  }
+}

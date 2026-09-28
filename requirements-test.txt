@@ -1,0 +1,13 @@
+# Test dependencies. pytest-homeassistant-custom-component pins the exact
+# homeassistant and pytest-asyncio versions it was built against; the two lines
+# below restate that pin so a bare install is reproducible. Home Assistant
+# 2026.9 needs Python 3.14, which is what the Makefile provisions.
+pytest-homeassistant-custom-component==0.13.367
+homeassistant==2026.9.4
+pytest-asyncio==1.4.0
+# Requirements of the Home Assistant components the tests load (tts needs
+# mutagen and depends on ffmpeg, which needs ha-ffmpeg). The harness never
+# installs component requirements, so they are pinned here at the versions the
+# 2026.9.4 manifests declare.
+ha-ffmpeg==3.2.2
+mutagen==1.48.1

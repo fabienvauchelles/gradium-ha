@@ -1,0 +1,27 @@
+# Quality gate configuration for the integration. There is a single Python area
+# here (custom_components/gradium plus its tests), so one config covers the
+# repository. Home Assistant ships py.typed but does not re-export every name
+# through __all__, hence implicit_reexport on top of strict.
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "RUF"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["custom_components"]
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+implicit_reexport = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+# aiohttp and the websocket layer are chatty at INFO, which buries the gate output.
+log_level = "WARNING"
