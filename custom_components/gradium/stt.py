@@ -22,7 +22,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .client import GradiumAuthError, GradiumError, SttSettings
 from .const import CONF_LANGUAGE, DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES
-from .data import GradiumConfigEntry, base_language
+from .data import GradiumConfigEntry, base_language, supported_language_tags
 from .entity import GradiumEntity
 from .errors import log_gradium_error
 
@@ -56,8 +56,8 @@ class GradiumSttEntity(GradiumEntity, SpeechToTextEntity):
     @property
     @override
     def supported_languages(self) -> list[str]:
-        """Return the languages Gradium transcribes."""
-        return list(SUPPORTED_LANGUAGES)
+        """Return the languages Gradium transcribes, with their region-tagged variants."""
+        return supported_language_tags()
 
     @property
     @override

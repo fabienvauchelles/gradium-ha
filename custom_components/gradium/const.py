@@ -26,6 +26,16 @@ DEFAULT_TTS_MODEL: Final = "default"
 TTS_MODELS: Final = ("default", "gradium-tts-beta")
 DEFAULT_LANGUAGE: Final = "fr"
 SUPPORTED_LANGUAGES: Final = ("fr", "en", "de", "es", "pt")
+# Region-tagged variants accepted by the STT entity. Home Assistant checks the
+# requested tag against the declared list as is, so "fr-FR" must be listed next
+# to "fr"; every variant is sent to Gradium as its base code.
+LANGUAGE_REGIONS: Final[dict[str, tuple[str, ...]]] = {
+    "fr": ("FR", "BE", "CA", "CH", "LU"),
+    "en": ("US", "GB", "AU", "CA", "IE", "IN", "NZ", "ZA"),
+    "de": ("DE", "AT", "CH", "LU"),
+    "es": ("ES", "MX", "AR", "CL", "CO", "US"),
+    "pt": ("PT", "BR"),
+}
 
 # Gradium streams pcm_48000; Home Assistant converts it with ffmpeg for the satellite.
 TTS_SAMPLE_RATE: Final = 48000

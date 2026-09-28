@@ -72,6 +72,10 @@ live stream it costs no latency since it goes out while the server waits for
 real audio. `delay_in_frames` does not help. Pinned by the STT tests, which
 check the four zero frames and then the caller's audio byte for byte.
 
+**STT lists region-tagged languages** (`LANGUAGE_REGIONS`): Home Assistant
+compares the requested tag to `supported_languages` as is and answers 415 to
+`fr-FR` when only `fr` is listed. Every variant is sent as its base code.
+
 **STT never waits for the server's `end_of_stream`.** Every word has arrived
 by `flushed`; the server's end costs another 0.5 to 0.9 s. Send
 `end_of_stream`, then close.
