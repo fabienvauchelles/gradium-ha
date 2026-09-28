@@ -1,6 +1,6 @@
 """Gradium REST API: the voice listing and the credit balance.
 
-Both reads cost no credit, which is why the credit balance doubles as the API
+Both are plain authenticated reads; the credit balance also serves as the API
 key check.
 """
 

@@ -52,7 +52,7 @@ class GradiumClient:
         return self._region
 
     async def async_get_credits(self) -> Credits:
-        """Read the credit balance; costs no credit, so it also checks the key."""
+        """Read the credit balance; as an authenticated read, it also checks the key."""
         payload = await self._rest.get_json(const.CREDITS_PATH)
         return parse_credits(payload)
 

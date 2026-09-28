@@ -63,7 +63,7 @@ STEP_REAUTH_SCHEMA = vol.Schema({vol.Required(CONF_API_KEY): _API_KEY_SELECTOR})
 
 
 async def _async_validate(hass: HomeAssistant, api_key: str, region: Region) -> str | None:
-    """Check the key with a credits read, which costs no credit.
+    """Check the key with a credits read.
 
     Returns the `config.error` key to show, or None when the key works.
     """
