@@ -70,7 +70,10 @@ the satellite with ffmpeg.
    input format.
 4. Send audio as `{"type": "audio", "audio": <base64>}`, one 80 ms frame of
    2560 bytes (16 kHz s16le mono) per message. Home Assistant forwards 10 ms
-   chunks of 320 bytes; the integration regroups them.
+   chunks of 320 bytes; the integration regroups them. Four silent frames
+   (320 ms) go first: when speech starts within the first 200 ms of the
+   stream, the model can drop a short first word ("Il fait 21 degrés" came
+   back as "fait 21 degrés"); with 250 ms or more of lead-in it is kept.
 5. Receive meanwhile:
    - `text`: a word or a few (`{"text": "Allume la", "start_s": 0.56}`), about
      0.56 s behind the audio. Each is closed by `end_text`.

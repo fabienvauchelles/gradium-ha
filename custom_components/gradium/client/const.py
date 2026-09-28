@@ -38,6 +38,13 @@ VOICES_PARAMS: Final[dict[str, str]] = {"include_catalog": "true", "limit": "100
 # STT input: 80 ms frames of 16 kHz signed 16-bit little-endian mono PCM.
 STT_FRAME_BYTES: Final = 2560
 STT_INPUT_FORMAT: Final = "pcm_16000"
+# Silent frames sent after `ready` and before the caller's audio (4 x 80 ms =
+# 320 ms). The ASR model can drop a short first word when speech starts within
+# the first 200 ms of a stream, and a satellite that detects its own wake word
+# starts the stream right as the user speaks. A lead-in of 250 ms or more keeps
+# that word; on a live stream it costs no latency, as it goes out at once while
+# the server waits for the real audio.
+STT_LEAD_IN_FRAMES: Final = 4
 FLUSH_ID: Final = 1
 
 TTS_OUTPUT_FORMAT_PREFIX: Final = "pcm_"

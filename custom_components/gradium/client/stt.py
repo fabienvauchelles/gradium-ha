@@ -1,6 +1,7 @@
 """One speech-to-text session over the Gradium ASR WebSocket.
 
-The caller's audio (HA sends 10 ms chunks) is regrouped into 80 ms frames and
+A short silent lead-in goes out first (see `STT_LEAD_IN_FRAMES`), then the
+caller's audio (HA sends 10 ms chunks), regrouped into 80 ms frames and
 forwarded as it arrives. When the caller's stream ends (HA's VAD saw the end
 of speech), a flush is sent right away, without silent drain frames: measured
 on the real API, the transcript is complete either way and comes back about
@@ -17,12 +18,14 @@ from typing import Any
 
 import aiohttp
 
-from .const import FLUSH_ID, STT_INPUT_FORMAT, STT_PATH
+from .const import FLUSH_ID, STT_FRAME_BYTES, STT_INPUT_FORMAT, STT_LEAD_IN_FRAMES, STT_PATH
 from .errors import GradiumServerError, GradiumTimeoutError
 from .models import Endpoint, SttSettings, Timeouts
 from .pcm import PcmFramer
 from .socket import GradiumSocket
 from .tasks import stop_task
+
+_SILENT_FRAME = bytes(STT_FRAME_BYTES)
 
 
 class GradiumSttSession:
@@ -103,7 +106,13 @@ class GradiumSttSession:
     async def _send_audio(
         self, socket: GradiumSocket, audio: AsyncIterable[bytes], reader: asyncio.Task[None]
     ) -> None:
-        """Forward the caller's audio as fixed-size frames, the last one zero-padded."""
+        """Send the silent lead-in, then the caller's audio as fixed-size frames.
+
+        The last frame is zero-padded. The lead-in goes out before the first
+        chunk is pulled, so the caller's audio follows it whole and in order.
+        """
+        for _ in range(STT_LEAD_IN_FRAMES):
+            await self._send_frame(socket, _SILENT_FRAME, reader)
         framer = PcmFramer()
         async for chunk in audio:
             for frame in framer.push(chunk):

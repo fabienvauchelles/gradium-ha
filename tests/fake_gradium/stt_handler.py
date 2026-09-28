@@ -17,10 +17,11 @@ from typing import Any
 
 from aiohttp import web
 
-from ..fixtures import TRANSCRIPT_WORDS
+from ..fixtures import STT_LEAD_IN_FRAMES, TRANSCRIPT_WORDS
 from .behaviors import SttBehavior, SttRecord, send_error, send_policy_refusal
 
-ERROR_AFTER_FRAMES = 3
+# The error comes on the third frame of the caller's audio, after the silent lead-in.
+ERROR_AFTER_FRAMES = STT_LEAD_IN_FRAMES + 3
 FIRST_WORD_FRAME = 3
 FRAME_SECONDS = 0.08
 VAD_HORIZONS = (0.5, 1.0, 2.0, 3.0)

@@ -25,6 +25,7 @@ FRENCH_CATALOG = (APOLLINE, CLAIRE, GASPARD)
 
 TTS_SAMPLES_PER_CHUNK = 3840  # 80 ms at 48 kHz, as the real server sends
 STT_FRAME_BYTES = 2560  # 80 ms at 16 kHz s16le
+STT_LEAD_IN_FRAMES = 4  # 320 ms of silence the client sends before the caller's audio
 HA_CHUNK_BYTES = 320  # 10 ms at 16 kHz s16le, what the assist pipeline forwards
 
 TRANSCRIPT = "Allume la lumière du canapé."

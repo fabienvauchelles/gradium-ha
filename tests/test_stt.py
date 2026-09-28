@@ -2,7 +2,7 @@
 
 Audio is fed the way the assist pipeline does it: 16 kHz mono PCM in 10 ms
 chunks of 320 bytes, which the integration regroups into Gradium's 80 ms
-frames of 2560 bytes.
+frames of 2560 bytes, after a short silent lead-in.
 """
 
 from __future__ import annotations
@@ -21,6 +21,7 @@ from .fake_gradium import FakeGradiumServer, SttBehavior
 from .fixtures import (
     HA_CHUNK_BYTES,
     STT_FRAME_BYTES,
+    STT_LEAD_IN_FRAMES,
     TRANSCRIPT,
     ha_chunks,
     speech_pcm,
@@ -34,7 +35,7 @@ pytestmark = pytest.mark.usefixtures("setup_integration")
 async def test_speech_is_framed_flushed_and_transcribed(
     hass: HomeAssistant, fake_gradium: FakeGradiumServer, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """80 ms frames, the tail zero-padded, flush at once without drain, then end_of_stream."""
+    """Silent lead-in, then 80 ms frames, the tail zero-padded, flush at once, end_of_stream."""
     pcm = speech_pcm(SPEECH_MS)
     audio = HaAudio(pcm)
     assert len(audio.chunks[0]) == HA_CHUNK_BYTES
@@ -51,12 +52,14 @@ async def test_speech_is_framed_flushed_and_transcribed(
     assert record.setup["input_format"] == "pcm_16000"
     assert record.setup["json_config"] == {"language": "fr", "delay_in_frames": 7}
 
+    lead_in, speech = record.frames[:STT_LEAD_IN_FRAMES], record.frames[STT_LEAD_IN_FRAMES:]
+    assert lead_in == [bytes(STT_FRAME_BYTES)] * STT_LEAD_IN_FRAMES
     full_frames, remainder = divmod(len(pcm), STT_FRAME_BYTES)
     assert remainder
-    assert len(record.frames) == full_frames + 1
-    assert all(len(frame) == STT_FRAME_BYTES for frame in record.frames)
-    assert b"".join(record.frames)[: len(pcm)] == pcm
-    assert record.frames[-1][remainder:] == bytes(STT_FRAME_BYTES - remainder)
+    assert len(speech) == full_frames + 1
+    assert all(len(frame) == STT_FRAME_BYTES for frame in speech)
+    assert b"".join(speech)[: len(pcm)] == pcm
+    assert speech[-1][remainder:] == bytes(STT_FRAME_BYTES - remainder)
 
     # No silent drain frames between the speech and the flush.
     audio_count = len(record.frames)

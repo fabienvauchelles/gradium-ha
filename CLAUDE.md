@@ -64,6 +64,14 @@ word can come 0.4 to 0.8 s late. Pinned by
 `test_speech_is_framed_flushed_and_transcribed`, which asserts the exact
 message sequence: setup, audio frames, flush, end_of_stream.
 
+**STT sends 320 ms of silence before the caller's audio** (`STT_LEAD_IN_FRAMES`).
+The model drops a short first word that starts within the first 200 ms of the
+stream, and a Voice PE starts the stream right after its own wake word, with
+no pre-roll from Home Assistant. 250 ms of lead-in was enough in tests; on a
+live stream it costs no latency since it goes out while the server waits for
+real audio. `delay_in_frames` does not help. Pinned by the STT tests, which
+check the four zero frames and then the caller's audio byte for byte.
+
 **STT never waits for the server's `end_of_stream`.** Every word has arrived
 by `flushed`; the server's end costs another 0.5 to 0.9 s. Send
 `end_of_stream`, then close.
