@@ -37,7 +37,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # The license check requires an OSI-approved licence. FSL-1.1-MIT is
+      # source-available by choice and not OSI-approved, so the check can
+      # never pass; it only gates the HACS default store, not installation
+      # as a custom repository, which is how this integration is published.
       - name: Validate for HACS
         uses: hacs/action@main
         with:
           category: integration
+          ignore: license
