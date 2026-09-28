@@ -132,6 +132,9 @@ class FakeGradiumServer:
             await self._release.wait()
             record.closed.set()
             return web.Response(status=503)
+        if not record.authorized and self.auth_failure is AuthFailure.UPGRADE_REFUSED:
+            record.closed.set()
+            return web.json_response({"detail": AUTH_FAILURE}, status=401)
         ws = web.WebSocketResponse(max_msg_size=0, timeout=CLOSE_HANDSHAKE_TIMEOUT)
         await ws.prepare(request)
         return await _run_session(ws, record, handler, self.auth_failure)

@@ -30,6 +30,7 @@ class AuthFailure(Enum):
 
     ERROR_MESSAGE = auto()  # error message code 1008, then close 1008 (wrong key)
     BARE_CLOSE = auto()  # close 1008 with no JSON (missing key)
+    UPGRADE_REFUSED = auto()  # the upgrade itself answered 401, which the client also handles
 
 
 class RestFailure(Enum):

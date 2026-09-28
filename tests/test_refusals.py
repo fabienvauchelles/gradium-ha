@@ -205,3 +205,22 @@ async def test_policy_refusal_on_tts_raises_server_error_without_reauth(
     assert reauth_flows(hass) == []
     assert str(info.value) == f"Gradium reported an error: {detail}"
     assert_key_not_leaked(caplog, str(info.value))
+
+
+async def test_upgrade_refused_on_tts_raises_invalid_auth_without_credit_read(
+    hass: HomeAssistant, fake_gradium: FakeGradiumServer, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A 401 on the upgrade itself names the key at once: invalid_auth, reauth, no credit read."""
+    _revoke_key(fake_gradium, AuthFailure.UPGRADE_REFUSED)
+
+    with pytest.raises(HomeAssistantError) as info:
+        await speak(hass, SENTENCE)
+    await hass.async_block_till_done()
+
+    assert info.value.translation_key == "invalid_auth"
+    assert str(info.value) == f"{KEY_REFUSED}HTTP 401 on the WebSocket upgrade"
+    [record] = fake_gradium.tts_sessions
+    assert not record.authorized
+    assert _credit_reads(fake_gradium) == []
+    assert len(reauth_flows(hass)) == 1
+    assert_key_not_leaked(caplog, str(info.value))

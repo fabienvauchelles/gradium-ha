@@ -30,7 +30,7 @@ from .conftest import (
     session_closed,
     speak,
 )
-from .fake_gradium import FakeGradiumServer, TtsBehavior, TtsRecord
+from .fake_gradium import ERROR_MESSAGE, FakeGradiumServer, TtsBehavior, TtsRecord
 from .fixtures import CLAIRE, GASPARD, SENTENCE
 
 WAV_HEADER_BYTES = 44
@@ -134,6 +134,7 @@ async def test_error_after_first_audio_raises_server_error(
         await speak(hass, SENTENCE)
 
     assert info.value.translation_key == "server_error"
+    assert str(info.value) == f"Gradium reported an error: {ERROR_MESSAGE}"
     assert reauth_flows(hass) == []
     record = await session_closed(fake_gradium.tts_sessions[0])
     assert record.error_sent.is_set()

@@ -7,6 +7,9 @@ and requests refused on policy, and only the free-text message differs, so
 every 1008 becomes a `GradiumPolicyError` that the client resolves with a
 credit read. Guessing from the text would either miss a bad key or start a
 reauth that accepts the same key and loops.
+
+Error messages carry only the detail of what went wrong: the error class, and
+the message Home Assistant shows for it, name the failure once.
 """
 
 from __future__ import annotations
@@ -48,10 +51,10 @@ def close_error(code: int | None, reason: str | None = None) -> GradiumError:
     """Map a close that came without a JSON error message to a typed error."""
     detail = f"close code {code}" + (f": {reason}" if reason else "")
     if code == CLOSE_POLICY_VIOLATION:
-        return GradiumPolicyError(f"Gradium refused the request ({detail})", detail, code)
+        return GradiumPolicyError(detail, detail, code)
     if code in _SERVER_CLOSE_CODES:
-        return GradiumServerError(f"Gradium closed the connection on an error ({detail})", code)
-    return GradiumConnectionError(f"Gradium closed the connection unexpectedly ({detail})")
+        return GradiumServerError(f"connection closed on an error ({detail})", code)
+    return GradiumConnectionError(f"connection closed unexpectedly ({detail})")
 
 
 def error_message_error(message: dict[str, Any]) -> GradiumError:
@@ -60,8 +63,8 @@ def error_message_error(message: dict[str, Any]) -> GradiumError:
     code = message.get("code")
     code = code if isinstance(code, int) and not isinstance(code, bool) else None
     if code == CLOSE_POLICY_VIOLATION:
-        return GradiumPolicyError(f"Gradium refused the request: {text}", text, code)
-    return GradiumServerError(f"Gradium reported an error: {text}", code)
+        return GradiumPolicyError(text, text, code)
+    return GradiumServerError(text, code)
 
 
 class GradiumSocket:
@@ -93,17 +96,15 @@ class GradiumSocket:
                     timeout=ws_timeout,
                 )
         except TimeoutError as err:
-            raise GradiumTimeoutError(
-                f"Gradium did not accept the connection in time (connect, {timeout} s)"
-            ) from err
+            raise GradiumTimeoutError(f"no connection within {timeout} s (connect)") from err
         except aiohttp.WSServerHandshakeError as err:
             if err.status in _AUTH_STATUSES:
-                raise GradiumAuthError(f"Gradium refused the API key (HTTP {err.status})") from err
+                raise GradiumAuthError(f"HTTP {err.status} on the WebSocket upgrade") from err
             raise GradiumConnectionError(
-                f"Gradium refused the WebSocket upgrade (HTTP {err.status})"
+                f"WebSocket upgrade refused with HTTP {err.status}"
             ) from err
         except aiohttp.ClientError as err:
-            raise GradiumConnectionError(f"Cannot connect to Gradium: {err}") from err
+            raise GradiumConnectionError(str(err) or type(err).__name__) from err
         return cls(ws, timeouts.close)
 
     async def send(self, message: dict[str, Any]) -> None:
@@ -111,7 +112,7 @@ class GradiumSocket:
         try:
             await self._ws.send_str(json.dumps(message))
         except (aiohttp.ClientError, ConnectionError) as err:
-            raise GradiumConnectionError(f"Cannot send to Gradium: {err}") from err
+            raise GradiumConnectionError(f"send failed: {err}") from err
 
     async def receive(self, timeout: float | None, *, phase: str = "receive") -> dict[str, Any]:
         """Receive the next JSON message, waiting at most `timeout` seconds.
@@ -122,9 +123,7 @@ class GradiumSocket:
             async with asyncio.timeout(timeout):
                 msg = await self._ws.receive()
         except TimeoutError as err:
-            raise GradiumTimeoutError(
-                f"Gradium did not answer in time ({phase}, {timeout} s)"
-            ) from err
+            raise GradiumTimeoutError(f"no message within {timeout} s ({phase})") from err
         if msg.type is aiohttp.WSMsgType.TEXT:
             return _parse_text(msg.data)
         if msg.type is aiohttp.WSMsgType.CLOSE:
@@ -132,8 +131,8 @@ class GradiumSocket:
         if msg.type in _CLOSE_TYPES:
             raise close_error(self._ws.close_code)
         if msg.type is aiohttp.WSMsgType.ERROR:
-            raise GradiumConnectionError(f"Gradium connection failed: {msg.data}")
-        raise GradiumServerError(f"Gradium sent an unexpected {msg.type.name} message")
+            raise GradiumConnectionError(f"connection failed: {msg.data}")
+        raise GradiumServerError(f"unexpected {msg.type.name} message")
 
     async def close(self) -> None:
         """Close the WebSocket without ever holding the caller up for long.
@@ -159,9 +158,9 @@ def _parse_text(data: str) -> dict[str, Any]:
     try:
         message = json.loads(data)
     except ValueError as err:
-        raise GradiumServerError("Gradium sent a message that is not valid JSON") from err
+        raise GradiumServerError("a message is not valid JSON") from err
     if not isinstance(message, dict):
-        raise GradiumServerError("Gradium sent a JSON message that is not an object")
+        raise GradiumServerError("a JSON message is not an object")
     if message.get("type") == "error":
         raise error_message_error(message)
     return message

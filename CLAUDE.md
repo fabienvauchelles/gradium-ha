@@ -76,6 +76,10 @@ check the four zero frames and then the caller's audio byte for byte.
 compares the requested tag to `supported_languages` as is and answers 415 to
 `fr-FR` when only `fr` is listed. Every variant is sent as its base code.
 
+**Error messages carry only the detail.** The error class, and the translated
+message Home Assistant shows for it, name the failure ("Gradium refused the
+API key: {error}"), so client messages must not repeat it.
+
 **STT never waits for the server's `end_of_stream`.** Every word has arrived
 by `flushed`; the server's end costs another 0.5 to 0.9 s. Send
 `end_of_stream`, then close.
